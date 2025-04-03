@@ -2,24 +2,49 @@ import { useState } from "react";
 import "./styles/ReviewForm.css";
 
 function ReviewForm({ onSubmit }) {
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [title, setTitle] = useState("");
-  const [comment, setComment] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [formData, setFormData] = useState({
+    rating: 0,
+    hoverRating: 0,
+    title: "",
+    comment: "",
+    name: "",
+    email: "",
+  });
   const [errors, setErrors] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleRatingChange = (rating) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      rating,
+    }));
+  };
+
+  const handleHoverRatingChange = (hoverRating) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      hoverRating,
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     // Validate form
     const newErrors = {};
-    if (rating === 0) newErrors.rating = "Please select a rating";
-    if (!title.trim()) newErrors.title = "Please enter a review title";
-    if (!comment.trim()) newErrors.comment = "Please enter your review";
-    if (!name.trim()) newErrors.name = "Please enter your name";
-    if (!email.trim()) newErrors.email = "Please enter your email";
+    if (formData.rating === 0) newErrors.rating = "Please select a rating";
+    if (!formData.title.trim()) newErrors.title = "Please enter a review title";
+    if (!formData.comment.trim())
+      newErrors.comment = "Please enter your review";
+    if (!formData.name.trim()) newErrors.name = "Please enter your name";
+    if (!formData.email.trim()) newErrors.email = "Please enter your email";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -27,22 +52,20 @@ function ReviewForm({ onSubmit }) {
     }
 
     // Submit the review
-    onSubmit({
-      name,
-      rating,
-      title,
-      comment,
-      email,
-    });
+    onSubmit(formData);
 
     // Reset form
-    setRating(0);
-    setTitle("");
-    setComment("");
-    setName("");
-    setEmail("");
+    setFormData({
+      rating: 0,
+      hoverRating: 0,
+      title: "",
+      comment: "",
+      name: "",
+      email: "",
+    });
     setErrors({});
   };
+
   return (
     <form onSubmit={handleSubmit} className="review-form">
       <div className="form-group">
@@ -54,17 +77,21 @@ function ReviewForm({ onSubmit }) {
             <span
               key={star}
               className={`rating-star ${
-                star <= (hoverRating || rating) ? "star-filled" : "star-empty"
+                star <= (formData.hoverRating || formData.rating)
+                  ? "star-filled"
+                  : "star-empty"
               }`}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
-              onClick={() => setRating(star)}
+              onMouseEnter={() => handleHoverRatingChange(star)}
+              onMouseLeave={() => handleHoverRatingChange(0)}
+              onClick={() => handleRatingChange(star)}
             >
               ★
             </span>
           ))}
           <span className="rating-text">
-            {rating > 0 ? `${rating} out of 5 stars` : "Click to rate"}
+            {formData.rating > 0
+              ? `${formData.rating} out of 5 stars`
+              : "Click to rate"}
           </span>
         </div>
         {errors.rating && <p className="error-message">{errors.rating}</p>}
@@ -76,9 +103,10 @@ function ReviewForm({ onSubmit }) {
         </label>
         <input
           id="title"
+          name="title"
           type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={formData.title}
+          onChange={handleChange}
           placeholder="Summarize your experience"
           className="form-input"
         />
@@ -91,8 +119,9 @@ function ReviewForm({ onSubmit }) {
         </label>
         <textarea
           id="comment"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          name="comment"
+          value={formData.comment}
+          onChange={handleChange}
           placeholder="What did you like or dislike about this product?"
           rows={5}
           className="form-textarea"
@@ -107,9 +136,10 @@ function ReviewForm({ onSubmit }) {
           </label>
           <input
             id="name"
+            name="name"
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={formData.name}
+            onChange={handleChange}
             placeholder="Your name"
             className="form-input"
           />
@@ -122,9 +152,10 @@ function ReviewForm({ onSubmit }) {
           </label>
           <input
             id="email"
+            name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
             placeholder="Your email (not published)"
             className="form-input"
           />

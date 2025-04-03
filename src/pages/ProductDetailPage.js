@@ -3,17 +3,19 @@ import { useParams } from "react-router-dom";
 import ProductReviews from "../components/ProductReviews";
 import "./styles/ProductDetailPage.css";
 import { useStore } from "../context/reviewContext.js";
-import Rating from "../components/Rating";
+import Rating from '../components/Rating.js';
 
 function ProductDetailPage() {
   const { id } = useParams();
   const { products } = useStore();
+
   const product = products.find((p) => p.id === Number.parseInt(id));
   const [selectedImage, setSelectedImage] = useState(null);
 
   if (!product) {
     return <div className="container">Product not found</div>;
   }
+  console.log('product details  page re-rendered');
 
   return (
     <div className="container">
@@ -25,12 +27,12 @@ function ProductDetailPage() {
                 <button
                   key={index}
                   className={`thumbnail-button ${
-                    selectedImage === index ? "active" : ""
+                    selectedImage === index ? 'active' : ''
                   }`}
                   onClick={() => setSelectedImage(index)}
                 >
                   <img
-                    src={image || "/placeholder.svg"}
+                    src={image || '/placeholder.svg'}
                     alt={`${product.name} thumbnail ${index + 1}`}
                     className="thumbnail-image"
                   />
@@ -49,7 +51,7 @@ function ProductDetailPage() {
           <h1 className="product-name">{product.name}</h1>
 
           <div className="product-rating">
-            <Rating productId={product.id}></Rating>
+            <Rating productId={product.id} />
           </div>
 
           <div className="product-price">
@@ -62,7 +64,7 @@ function ProductDetailPage() {
                 ${product.originalPrice.toFixed(2)}
               </span>
               <span className="discount-badge">
-                Save{" "}
+                Save{' '}
                 {Math.round(
                   (1 - product.salePrice / product.originalPrice) * 100
                 )}
@@ -86,7 +88,7 @@ function ProductDetailPage() {
             </div>
             <div className="meta-item">
               <span className="meta-label">Tags:</span>
-              <span className="meta-value">{product.tags.join(", ")}</span>
+              <span className="meta-value">{product.tags.join(', ')}</span>
             </div>
           </div>
         </div>

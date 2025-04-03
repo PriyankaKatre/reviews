@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../context/reviewContext.js";
 
-export default Rating = ({ productId, showCount = true }) => {
+const Rating = ({ productId, showCount = true, reviewRating }) => {
   const { averageRatings, getReviewsByProductId } = useStore();
   const [productReviews, setProductReviews] = useState([]);
 
-  const rating = averageRatings[productId];
+  const rating = reviewRating || averageRatings[productId];
 
   useEffect(() => {
     const reviews = getReviewsByProductId(productId);
@@ -17,7 +17,7 @@ export default Rating = ({ productId, showCount = true }) => {
       {[1, 2, 3, 4, 5].map((star) => (
         <span
           key={star}
-          className={`star ${star <= rating ? "star-filled" : "star-empty"}`}
+          className={`star ${star <= rating ? 'star-filled' : 'star-empty'}`}
         >
           &#9733;
         </span>
@@ -34,3 +34,5 @@ export default Rating = ({ productId, showCount = true }) => {
     </div>
   );
 };
+
+export default Rating;

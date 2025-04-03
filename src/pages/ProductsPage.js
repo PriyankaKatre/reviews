@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Rating from "../components/Rating";
+import Rating from '../components/Rating.js';
 import "./styles/ProductsPage.css";
 import { useStore } from "../context/reviewContext.js";
 
@@ -12,6 +12,7 @@ function ProductsPage() {
     (product) => product.category === activeTab
   );
 
+  console.log('product page re-rendered');
   return (
     <div className="container">
       <h1 className="page-title">Our Products</h1>

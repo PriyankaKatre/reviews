@@ -3,39 +3,49 @@ import ReviewCard from "./ReviewCard";
 import ReviewForm from "./ReviewForm";
 import "./styles/ProductReviews.css";
 import { useStore } from "../context/reviewContext.js";
-import Rating from "./Rating";
+import Rating from "./Rating.js";
 
 function ProductReviews({ productId }) {
   const { getReviewsByProductId, addReview, averageRatings } = useStore();
-  const [productReviews, setProductReviews] = useState([]);
-  const [page, setPage] = useState(1);
+  const [state, setState] = useState({
+    productReviews: [],
+    page: 1,
+    filterRating: null,
+    showForm: false,
+    activeTab: "recent",
+  });
   const observer = useRef();
+  const sentinelRef = useRef();
 
   const fetchReviews = (page) => {
     let reviews = getReviewsByProductId(productId);
-    let limit = 5;
+    const limit = 5;
     const start = (page - 1) * limit;
     const end = start + limit;
     reviews = reviews.slice(start, end);
-    setProductReviews((prevReviews) => {
-      const newReviews = reviews.filter(
-        (review) =>
-          !prevReviews.some((prevReview) => prevReview.id === review.id)
-      );
-      return [...prevReviews, ...newReviews];
-    });
+    setState((prevState) => ({
+      ...prevState,
+      productReviews: [
+        ...prevState.productReviews,
+        ...reviews.filter(
+          (review) =>
+            !prevState.productReviews.some(
+              (prevReview) => prevReview.id === review.id
+            )
+        ),
+      ],
+    }));
   };
 
   useEffect(() => {
     fetchReviews(1); // Initial load
   }, [productId, getReviewsByProductId]);
 
-  const sentinelRef = useRef();
   useEffect(() => {
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        setPage((prevPage) => prevPage + 1);
+        setState((prevState) => ({ ...prevState, page: prevState.page + 1 }));
       }
     });
     if (sentinelRef.current) {
@@ -44,33 +54,11 @@ function ProductReviews({ productId }) {
   }, [sentinelRef]);
 
   useEffect(() => {
-    if (page > 1) {
-      fetchReviews(page); // Load more reviews
+    if (state.page > 1) {
+      fetchReviews(state.page); // Load more reviews
     }
-  }, [page]);
+  }, [state.page]);
 
-  const [filterRating, setFilterRating] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState("recent");
-
-  // Filter reviews by rating
-  const filteredReviews = filterRating
-    ? productReviews.filter((review) => review.rating === filterRating)
-    : productReviews;
-
-  // Count reviews by rating
-  const ratingCounts = [5, 4, 3, 2, 1].map((rating) => ({
-    rating,
-    count: productReviews.filter((review) => review.rating === rating).length,
-    percentage:
-      productReviews.length > 0
-        ? (productReviews.filter((review) => review.rating === rating).length /
-            productReviews.length) *
-          100
-        : 0,
-  }));
-
-  // Add a new review
   const handleAddReview = (newReview) => {
     const reviewWithId = {
       ...newReview,
@@ -82,12 +70,30 @@ function ProductReviews({ productId }) {
     };
 
     addReview(reviewWithId);
-    setShowForm(false);
+    setState((prevState) => ({ ...prevState, showForm: false }));
   };
 
-  // Sort reviews based on active tab
+  const filteredReviews = state.filterRating
+    ? state.productReviews.filter(
+        (review) => review.rating === state.filterRating
+      )
+    : state.productReviews;
+
+  const ratingCounts = [5, 4, 3, 2, 1].map((rating) => ({
+    rating,
+    count: state.productReviews.filter((review) => review.rating === rating)
+      .length,
+    percentage:
+      state.productReviews.length > 0
+        ? (state.productReviews.filter((review) => review.rating === rating)
+            .length /
+            state.productReviews.length) *
+          100
+        : 0,
+  }));
+
   const sortedReviews = [...filteredReviews].sort((a, b) => {
-    if (activeTab === "recent") {
+    if (state.activeTab === "recent") {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     } else {
       return b.helpfulVotes - a.helpfulVotes;
@@ -106,7 +112,7 @@ function ProductReviews({ productId }) {
             <Rating productId={productId} showCount={false} />
           </div>
           <div className="rating-count">
-            Based on {productReviews.length} reviews
+            Based on {state.productReviews.length} reviews
           </div>
         </div>
 
@@ -136,9 +142,14 @@ function ProductReviews({ productId }) {
               <button
                 key={rating === null ? "all" : rating}
                 className={`filter-button ${
-                  filterRating === rating ? "filter-button-active" : ""
+                  state.filterRating === rating ? "filter-button-active" : ""
                 }`}
-                onClick={() => setFilterRating(rating)}
+                onClick={() =>
+                  setState((prevState) => ({
+                    ...prevState,
+                    filterRating: rating,
+                  }))
+                }
               >
                 {rating === null ? "All" : rating}
               </button>
@@ -147,14 +158,19 @@ function ProductReviews({ productId }) {
         </div>
         <button
           className="write-review-button"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() =>
+            setState((prevState) => ({
+              ...prevState,
+              showForm: !prevState.showForm,
+            }))
+          }
         >
-          {showForm ? "Cancel" : "Write a Review"}
+          {state.showForm ? "Cancel" : "Write a Review"}
         </button>
       </div>
 
       {/* Review Form */}
-      {showForm && (
+      {state.showForm && (
         <div className="review-form-container">
           <ReviewForm onSubmit={handleAddReview} />
         </div>
@@ -165,17 +181,21 @@ function ProductReviews({ productId }) {
         <div className="tabs-list">
           <button
             className={`tab-button ${
-              activeTab === "recent" ? "tab-active" : ""
+              state.activeTab === "recent" ? "tab-active" : ""
             }`}
-            onClick={() => setActiveTab("recent")}
+            onClick={() =>
+              setState((prevState) => ({ ...prevState, activeTab: "recent" }))
+            }
           >
             Most Recent
           </button>
           <button
             className={`tab-button ${
-              activeTab === "helpful" ? "tab-active" : ""
+              state.activeTab === "helpful" ? "tab-active" : ""
             }`}
-            onClick={() => setActiveTab("helpful")}
+            onClick={() =>
+              setState((prevState) => ({ ...prevState, activeTab: "helpful" }))
+            }
           >
             Most Helpful
           </button>
